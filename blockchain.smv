@@ -1,0 +1,35 @@
+MODULE showBalance(id) -- Registro de saldos de cada id
+VAR
+	balance : array 1..5 of array 1..2 of integer
+	id, balance
+
+MODULE createTransaction (from, to, amount)
+
+	DEFINE
+		hasBalance :=  balance [from][2] >= amount # o remetente tem saldo?
+
+
+MODULE hashTransaction(transaction)  -- Considerar a existência!
+
+
+MODULE encrypt(transaction, public_key)
+
+return encryptedTransaction
+
+MODULE chainTransactions
+
+MODULE createBlock
+
+MODULE chainBlocks
+
+
+-- Pensar na definição da rede peer-to-peer
+	-- Estudar tipos de conjuntos no SMV
+	
+
+
+MAIN
+
+-- Gerar 1ª transação sem remetente, para alguém (Genesis)
+-- 
+

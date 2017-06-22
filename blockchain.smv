@@ -16,11 +16,10 @@ MODULE encrypt(transaction, public_key)
 
 return encryptedTransaction
 
-MODULE chainTransactions
+MODULE createBlock (id, timestamp, data, blockHash, prevBlockHash)
 
-MODULE createBlock
+MODULE broadcastBlock(id)
 
-MODULE chainBlocks
 
 
 -- Pensar na definição da rede peer-to-peer

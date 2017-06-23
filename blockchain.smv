@@ -1,24 +1,52 @@
 MODULE showBalance(id) -- Registro de saldos de cada id
-VAR
-	balance : array 1..5 of array 1..2 of integer
-	id, balance
+	VAR
+		balance : array 1..3 of array 1..2 of integer;
 
 MODULE createTransaction (from, to, amount)
 
+	VAR
+		hasBalance : boolean;
+
 	DEFINE
-		hasBalance :=  balance [from][2] >= amount # o remetente tem saldo?
-
-
-MODULE hashTransaction(transaction)  -- Considerar a existência!
+		hasBalance :=  balance [from][2] >= amount; -- o remetente tem saldo?
 
 
 MODULE encrypt(transaction, public_key)
 
-return encryptedTransaction
+	VAR 
+		encryptedTransaction: integer;
 
-MODULE createBlock (id, timestamp, data, blockHash, prevBlockHash)
+	DEFINE
+		encryptedTransaction := transaction + public_key;	
 
-MODULE broadcastBlock(id)
+MODULE createBlock (id, timestamp, data, blockHash, previousHash)
+
+	VAR
+		id := integer
+		timestamp := integer
+		data := array 1..5 of ???
+		blockHash : ??? 			--- Qual o tipo para hash?
+		previousBlockHash : ???
+
+
+	ASSIGN
+		next(id) := id + 1
+
+
+MODULE broadcastBlock(id)	--- Rede P2P
+	
+	VAR
+		isValid : boolean;
+		wasSent : boolean;
+
+
+	DEFINE
+		isValid :=   -- isValid if the id = previous_id + 1.
+
+		send := 	-- send the block to the other nodes.
+
+		wasSent :=  -- check a block in order to verify if it was already sent.
+
 
 
 
@@ -30,5 +58,5 @@ MODULE broadcastBlock(id)
 MAIN
 
 -- Gerar 1ª transação sem remetente, para alguém (Genesis)
--- 
+
 

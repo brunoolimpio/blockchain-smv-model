@@ -1,51 +1,57 @@
-MODULE showBalance(id) -- Registro de saldos de cada id
-	VAR
-		balance : array 1..3 of array 1..2 of integer;
-
-MODULE createTransaction (from, to, amount)
+MODULE createTransaction (from, to, amount, listBalance, listTransaction)
 
 	VAR
-		hasBalance : boolean;
+		fromHasBalance : boolean;
+		transactionValue : integer;
+		transactionId : integer;
+		transaction : boolean;
+		n : integer;
 
 	DEFINE
-		hasBalance :=  balance [from][2] >= amount; -- o remetente tem saldo?
-
-
-MODULE encrypt(transaction, public_key)
-
-	VAR 
-		encryptedTransaction: integer;
-
-	DEFINE
-		encryptedTransaction := transaction + public_key;	
-
-MODULE createBlock (id, timestamp, data, blockHash, previousHash)
-
-	VAR
-		id := integer
-		timestamp := integer
-		data := array 1..5 of ???
-		blockHash : ??? 			--- Qual o tipo para hash?
-		previousBlockHash : ???
+		fromHasBalance :=  listBalance[from] >= amount; --- o remetente tem saldo?
+		newBalanceFrom := listBalance[from] - amount; --- Novo saldo do remetente.
+		newBalanceTo := listBalance[to] + amount; --- Novo saldo do destinatário.
 
 
 	ASSIGN
-		next(id) := id + 1
+
+		next(transaction) := case
+							fromHasBalance : newBalanceFrom & newBalanceTo & listTransaction[n] := {n, from, to, amount} & n := n+1;
+							TRUE : transaction;
+							esac;
 
 
-MODULE broadcastBlock(id)	--- Rede P2P
-	
+
+
+
+
+--MODULE encrypt(transaction, public_key)
+
+	--VAR 
+--		encryptedTransaction: integer;
+
+
+--	DEFINE
+--		encryptedTransaction := transaction + public_key;	
+
+MODULE createBlock (id, timestamp, listTransaction, previousBlockId)
+
 	VAR
-		isValid : boolean;
-		wasSent : boolean;
+		id : integer;
+		blockCreation : boolean;
+		timestamp : integer;
+		previousBlockId : integer;
+		listBlock := array 1..10 of array 1..4 of unsigned word[10];
+		blockTransactions := array 1..3 of integer;
 
 
-	DEFINE
-		isValid :=   -- isValid if the id = previous_id + 1.
-
-		send := 	-- send the block to the other nodes.
-
-		wasSent :=  -- check a block in order to verify if it was already sent.
+	ASSIGN
+		next(blockTransactions) := {listTransaction[0][1],listTransaction[1][1], listTransaction[2][1]};
+		init(id) := 1;
+		init(timestamp) := 1;
+		next(id) := id + 1;
+		next(timestamp) := timestamp + 1;
+		next(blockCreation) := listBlock[id] := {id, timestamp, blockTransactions, previousBlockId};						
 
 
 
@@ -53,9 +59,86 @@ MODULE broadcastBlock(id)	--- Rede P2P
 -- Pensar na definição da rede peer-to-peer
 	-- Estudar tipos de conjuntos no SMV
 	
+MODULE broadcast(currentNode, nextNode nodeAdj1, nodeAdj2, nodeAdj3, nodeOrigin, blockId, destination)
+	VAR
+		listNode : array 1..5 of array 1..2 of integer;
+		nodeOrigin: integer;
+		nodeContents : array 1..10 of array 1..5 of integer; --lista de blocos, com a primeira posição a ID do nó e as posições seguintes
+													 --como sendo as IDs dos blocos contidos neste nó
+		
+
+	DEFINE
+		isNodeAdj := (nodeAdj1 = adj1 | nodeAdj2 = adj2 | nodeAdj3 = adj3);
+		requestLastBlock := isNodeAdj;
+
+		import
 
 
-MAIN
+MODULE searchBlock(requester, currentNode, adj1, adj2, adj3, blockRequest, nodeContents)
+
+
+	ASSIGN
+		
+
+		next(nodeAdj1) := case 
+							isNodeAdj : case
+										currentNode = 1 : 3;
+										currentNode = 2 : 3;
+										currentNode = 3 : 1;
+										currentNode = 4 : 1;
+										currentNode = 5 : 1;
+										TRUE : 0;
+									esac;
+								TRUE : currentNode;
+							esac;
+
+		next(nodeAdj2) := case 
+							isNodeAdj : case
+										currentNode = 1 : 4;										
+										currentNode = 3 : 2;
+										currentNode = 4 : 3;
+										currentNode = 5 : 4;
+										TRUE : 0;
+									esac;
+								TRUE : currentNode;
+							esac;
+
+		next(nodeAdj3) := case 
+							isNodeAdj : case
+										currentNode = 1 : 5;										
+										currentNode = 3 : 4;
+										currentNode = 4 : 5;										
+										TRUE : 0;
+									esac;
+								TRUE : currentNode;
+							esac;
+
+MODULE main
+	VAR
+		listBalance : array 1..5 of integer;
+		listTransaction : array 1..10 of array 1..4 of integer;
+		primeNumber : integer;
+		n : integer;
+
+
+		user : array 1..5 of unsigned word[1] := {a, b, c, d, e};
+
+		t1 : process createTransaction(1, user[1],user[2], 35, listBalance, listTransaction);
+		t2 : process createTransaction(primeNumber, user[2],user[3], 25, listBalance, listTransaction);
+		t3 : process createTransaction(primeNumber, user[3],user[4], 15, listBalance, listTransaction);
+		t4 : process createTransaction(primeNumber, user[4],user[5], 05, listBalance, listTransaction);
+		t5 : process createTransaction(primeNumber, user[5],user[1], 35, listBalance, listTransaction);
+
+
+	ASSIGN
+		listBalance[1] := 50;
+		--init(n) := 1;
+		--next(n) := case 
+		--			(n mod 2) != 0 & (n mod 3) != 0 & (n mod 5) != 0 & (n mod 7 != 0): primeNumber := n;
+		--		esac;
+
+
+
 
 -- Gerar 1ª transação sem remetente, para alguém (Genesis)
 

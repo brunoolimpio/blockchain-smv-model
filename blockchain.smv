@@ -1,11 +1,12 @@
-MODULE createTransaction (from, to, amount, listBalance, listTransaction)
+MODULE createTransaction (idT, from, to, amount, listBalance, listTransaction)
+--Step 1: A sender and a receiver create a transaction. It's just a value transfer from one to another.
 
 	VAR
 		fromHasBalance : boolean;
 		transactionValue : integer;
 		transactionId : integer;
 		transaction : boolean;
-		n : integer;
+		idT : integer;
 
 	DEFINE
 		fromHasBalance :=  listBalance[from] >= amount; --- o remetente tem saldo?
@@ -16,28 +17,21 @@ MODULE createTransaction (from, to, amount, listBalance, listTransaction)
 	ASSIGN
 
 		next(transaction) := case
-							fromHasBalance : newBalanceFrom & newBalanceTo & listTransaction[n] := {n, from, to, amount} & n := n+1;
+							fromHasBalance : newBalanceFrom & newBalanceTo & listTransaction[n] := {idT, from, to, amount} & idT := idT+1;
 							TRUE : transaction;
 							esac;
 
 
+-- Step 2: #TODO: Should have a MODULE to encrypt transactions.
+--			Ideally it would be the same to encrypt everything (transactions, blocks, addresses...).
 
 
-
-
---MODULE encrypt(transaction, public_key)
-
-	--VAR 
---		encryptedTransaction: integer;
-
-
---	DEFINE
---		encryptedTransaction := transaction + public_key;	
-
-MODULE createBlock (id, timestamp, listTransaction, previousBlockId)
+MODULE createBlock (idB, timestamp, listTransaction, previousBlockId)
+-- Step 3: Several transactions are put together and encrypted creating a block.
+--		   Each block contains into it an identification of the previous block, wich chains the blocks.
 
 	VAR
-		id : integer;
+		idB : integer;
 		blockCreation : boolean;
 		timestamp : integer;
 		previousBlockId : integer;
@@ -49,17 +43,16 @@ MODULE createBlock (id, timestamp, listTransaction, previousBlockId)
 		next(blockTransactions) := {listTransaction[0][1],listTransaction[1][1], listTransaction[2][1]};
 		init(id) := 1;
 		init(timestamp) := 1;
-		next(id) := id + 1;
+		next(idB) := idB + 1;
 		next(timestamp) := timestamp + 1;
-		next(blockCreation) := listBlock[id] := {id, timestamp, blockTransactions, previousBlockId};						
+		next(blockCreation) := listBlock[idB] := {idB, timestamp, blockTransactions, previousBlockId};						
 
 
-
-
--- Pensar na definição da rede peer-to-peer
-	-- Estudar tipos de conjuntos no SMV
+-- #TODO: Define a peer-to-peer network.
 	
+
 MODULE broadcast(currentNode, nextNode nodeAdj1, nodeAdj2, nodeAdj3, nodeOrigin, blockId, destination)
+-- Step 4: Once a node created a block, it should be broadcasted to the entire network.
 	VAR
 		listNode : array 1..5 of array 1..2 of integer;
 		nodeOrigin: integer;
@@ -136,10 +129,3 @@ MODULE main
 		--next(n) := case 
 		--			(n mod 2) != 0 & (n mod 3) != 0 & (n mod 5) != 0 & (n mod 7 != 0): primeNumber := n;
 		--		esac;
-
-
-
-
--- Gerar 1ª transação sem remetente, para alguém (Genesis)
-
-

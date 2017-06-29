@@ -49,62 +49,59 @@ MODULE createBlock (idB, timestamp, listTransaction, previousBlockId)
 
 
 -- #TODO: Define a peer-to-peer network.
-	
 
-MODULE broadcast(currentNode, nextNode nodeAdj1, nodeAdj2, nodeAdj3, nodeOrigin, blockId, destination)
+MODULE searchBlock(requester, adj1, adj2, adj3, requesterLastBlock, listNode)
+	
+	VAR
+		requester : integer
+
+
+	DEFINE
+
+		hasNewBlock := listNode[requester][1] < listNode[adj1][1] | 
+		 			   listNode[requester][1] < listNode[adj2][1] |
+		 			   listNode[requester][1] < listNode[adj3][1];
+
+	ASSIGN
+
+		next(adj1) := case 
+						requester = 1 : 3;
+						requester = 2 : 3;
+						requester = 3 : 1;
+						requester = 4 : 1;
+						requester = 5 : 1;
+						TRUE : 0;
+					esac;
+
+		next(adj2) := case
+						requester = 1 : 4;										
+						requester = 3 : 2;
+						requester = 4 : 3;
+						requester = 5 : 4;
+						TRUE : 0;							
+					esac;
+
+		next(adj3) := case
+						requester = 1 : 5;										
+						requester = 3 : 4;
+						requester = 4 : 5;										
+						TRUE : 0;
+					esac;
+
+
+MODULE broadcast(sender, nextNode nodeAdj1, nodeAdj2, nodeAdj3, nodeOrigin, blockId, destination)
 -- Step 4: Once a node created a block, it should be broadcasted to the entire network.
 	VAR
 		listNode : array 1..5 of array 1..2 of integer;
 		nodeOrigin: integer;
-		nodeContents : array 1..10 of array 1..5 of integer; --lista de blocos, com a primeira posição a ID do nó e as posições seguintes
-													 --como sendo as IDs dos blocos contidos neste nó
 		
 
 	DEFINE
-		isNodeAdj := (nodeAdj1 = adj1 | nodeAdj2 = adj2 | nodeAdj3 = adj3);
+		
 		requestLastBlock := isNodeAdj;
 
-		import
+		isa_declaration :: ISA searchBlock
 
-
-MODULE searchBlock(requester, currentNode, adj1, adj2, adj3, blockRequest, nodeContents)
-
-
-	ASSIGN
-		
-
-		next(nodeAdj1) := case 
-							isNodeAdj : case
-										currentNode = 1 : 3;
-										currentNode = 2 : 3;
-										currentNode = 3 : 1;
-										currentNode = 4 : 1;
-										currentNode = 5 : 1;
-										TRUE : 0;
-									esac;
-								TRUE : currentNode;
-							esac;
-
-		next(nodeAdj2) := case 
-							isNodeAdj : case
-										currentNode = 1 : 4;										
-										currentNode = 3 : 2;
-										currentNode = 4 : 3;
-										currentNode = 5 : 4;
-										TRUE : 0;
-									esac;
-								TRUE : currentNode;
-							esac;
-
-		next(nodeAdj3) := case 
-							isNodeAdj : case
-										currentNode = 1 : 5;										
-										currentNode = 3 : 4;
-										currentNode = 4 : 5;										
-										TRUE : 0;
-									esac;
-								TRUE : currentNode;
-							esac;
 
 MODULE main
 	VAR

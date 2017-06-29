@@ -9,17 +9,17 @@ MODULE createTransaction (idT, from, to, amount, listBalance, listTransaction)
 		idT : integer;
 
 	DEFINE
-		fromHasBalance :=  listBalance[from] >= amount; --- o remetente tem saldo?
-		newBalanceFrom := listBalance[from] - amount; --- Novo saldo do remetente.
-		newBalanceTo := listBalance[to] + amount; --- Novo saldo do destinatário.
+		fromHasBalance :=  listBalance[from] >= amount; --- Does the sender have enought balance?
+		newBalanceFrom := listBalance[from] - amount; 	--- New sender balance.
+		newBalanceTo := listBalance[to] + amount; 		--- New receiver balance.
 
 
 	ASSIGN
 
 		next(transaction) := case
-							fromHasBalance : newBalanceFrom & newBalanceTo & listTransaction[n] := {idT, from, to, amount} & idT := idT+1;
+							fromHasBalance : newBalanceFrom & newBalanceTo & listTransaction[idT] := {idT, from, to, amount} & idT := idT+1;
 							TRUE : transaction;
-							esac;
+						esac;
 
 
 -- Step 2: #TODO: Should have a MODULE to encrypt transactions.
@@ -45,21 +45,21 @@ MODULE createBlock (idB, timestamp, listTransaction, previousBlockId)
 		init(timestamp) := 1;
 		next(idB) := idB + 1;
 		next(timestamp) := timestamp + 1;
-		next(blockCreation) := listBlock[idB] := {idB, timestamp, blockTransactions, previousBlockId};						
+		next(blockCreation) := listBlock[idB] = {idB, timestamp, blockTransactions, previousBlockId};						
 
 
 -- #TODO: Define a peer-to-peer network.
 
-MODULE searchBlock(requester, adj1, adj2, adj3, requesterLastBlock, listNode)
+MODULE searchBlock(requester, adj1, adj2, adj3, listNode)
 	
 	VAR
-		requester : integer
-
+		requester : integer;
+		listNode : array 1..5 of array 1..2 of integer;  --- Array of the node IDs and its last nodes.
 
 	DEFINE
 
-		hasNewBlock := listNode[requester][1] < listNode[adj1][1] | 
-		 			   listNode[requester][1] < listNode[adj2][1] |
+		hasNewBlock := listNode[requester][1] < listNode[adj1][1] |		--- Compares the last block of the requester 
+					   listNode[requester][1] < listNode[adj2][1] |		--- and  adjacent node.
 		 			   listNode[requester][1] < listNode[adj3][1];
 
 	ASSIGN
@@ -89,18 +89,18 @@ MODULE searchBlock(requester, adj1, adj2, adj3, requesterLastBlock, listNode)
 					esac;
 
 
-MODULE broadcast(sender, nextNode nodeAdj1, nodeAdj2, nodeAdj3, nodeOrigin, blockId, destination)
+MODULE broadcast(sender, blockId)
 -- Step 4: Once a node created a block, it should be broadcasted to the entire network.
 	VAR
-		listNode : array 1..5 of array 1..2 of integer;
-		nodeOrigin: integer;
-		
-
+		sender : integer;
 	DEFINE
-		
-		requestLastBlock := isNodeAdj;
 
-		isa_declaration :: ISA searchBlock
+		checkNodes : searchBlock(sender, adj1, adj2, adj3, listNode);	--- Verify if each one of the adjacent
+																		--- nodes is up-to-date.
+	
+		
+		sendLastBlock := ???
+
 
 
 MODULE main

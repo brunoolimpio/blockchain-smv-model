@@ -93,14 +93,21 @@ MODULE broadcast(sender, blockId)
 -- Step 4: Once a node created a block, it should be broadcasted to the entire network.
 	VAR
 		sender : integer;
+		blockId : integer;
+
 	DEFINE
 
-		checkNodes : searchBlock(sender, adj1, adj2, adj3, listNode);	--- Verify if each one of the adjacent
-																		--- nodes is up-to-date.
-	
+		checkNodes : searchBlock(sender, adj1, adj2, adj3, listNode);	--- Verify if each one of the adjacent																		--- nodes is up-to-date
 		
-		sendLastBlock := ???
+		sendLastBlock := checkNodes.hasNewBlock;
 
+		upToDate := broadcast(sender, blockId)
+	ASSIGN
+
+		next(listNode[sender][1]) :=  case	
+										sendLastBlock : listNode[sender][1]+1
+										TRUE : listNode[sender][1];
+									esac;
 
 
 MODULE main

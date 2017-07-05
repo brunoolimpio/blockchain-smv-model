@@ -1,37 +1,92 @@
-MODULE createTransaction (idT, from, to, amount, listBalance, listTransaction)
---Step 1: A sender and a receiver create a transaction. It's just a value transfer from one to another.
-
+MODULE createNetwork
 	VAR
-		fromHasBalance : boolean;
-		transactionValue : integer;
-		transactionId : integer;
-		transaction : boolean;
-		idT : integer;
+		node1, node2, node3, node4, node5, node6, node7 : integer;
+		adj1, adj2 : integer;
 
 	DEFINE
-		fromHasBalance :=  listBalance[from] >= amount; --- Does the sender have enought balance?
-		newBalanceFrom := listBalance[from] - amount; 	--- New sender balance.
-		newBalanceTo := listBalance[to] + amount; 		--- New receiver balance.
+		next(adj1) := case
+						node1 : node2;
+						node2 : node3;
+						node3 : node4;
+						node4 : node5;
+						node5 : node6;
+						node6 : node7;
+						node7 : node1;						
+						TRUE : 0;
+					esac;
+
+		next(adj2) := case
+						node7 : node6;
+						node6 : node5;
+						node5 : node4;
+						node4 : node3;
+						node3 : node2;
+						node2 : node1;
+						node1 : node7;
+						TRUE : 0;
+					esac;
 
 
+MODULE createTransaction(transactionId, from, to, amount, listTransaction)
+--Step 2: A sender and a receiver create a transaction. It's just a value transfer from one to another.
+
+	VAR		
+		transaction : array 1..4 of integer;
+		fromHasBalance : boolean;
+		isValid : boolean;
+
+	DEFINE
+		fromHasBalance :=  from[2] >= amount; --- Does the sender have enough balance?
+		isValid := fromHasBalance & from != to
+
+	
 	ASSIGN
-
-		next(transaction) := case
-							fromHasBalance : newBalanceFrom & newBalanceTo & listTransaction[idT] := {idT, from, to, amount} & idT := idT+1;
-							TRUE : transaction;
+		next(from[2]) := case
+							isValid : from[2] - amount;
+							TRUE : from[2];
 						esac;
 
+		next(to[2]) := case
+						isValid : to[2] + amount;
+						TRUE : to[2];
+					esac;
+
+
+		next(listTransaction[1]) := case
+										listTransaction[1][1] = 0 : {transactionId, from, to, amount};
+										TRUE : listTransaction[1];
+									esac;
+
+		next(listTransaction[2]) := case
+										listTransaction[2][1] = 0 & listTransaction[1][1] < transactionId: {transactionId, from, to, amount};
+										TRUE : listTransaction[2];
+									esac;
+
+		next(listTransaction[3]) := case
+										listTransaction[3][1] = 0 & listTransaction[2][1] < transactionId : {transactionId, from, to, amount};
+										TRUE : listTransaction[3];
+									esac;
+
+		next(listTransaction[4]) := case
+										listTransaction[4][1] = 0 & listTransaction[3][1] < transactionId : {transactionId, from, to, amount};
+										TRUE : listTransaction[4];
+									esac;
+
+		next(listTransaction[5]) := case
+										listTransaction[5][1] = 0 & listTransaction[4][1] < transactionId : {transactionId, from, to, amount};
+										TRUE : listTransaction[5];
+									esac;
 
 -- Step 2: #TODO: Should have a MODULE to encrypt transactions.
 --			Ideally it would be the same to encrypt everything (transactions, blocks, addresses...).
 
 
-MODULE createBlock (idB, timestamp, listTransaction, previousBlockId)
+MODULE createBlock (blockId, listTransaction, previousBlockId)
 -- Step 3: Several transactions are put together and encrypted creating a block.
 --		   Each block contains into it an identification of the previous block, wich chains the blocks.
 
 	VAR
-		idB : integer;
+		blockId : integer;
 		blockCreation : boolean;
 		timestamp : integer;
 		previousBlockId : integer;
@@ -40,21 +95,21 @@ MODULE createBlock (idB, timestamp, listTransaction, previousBlockId)
 
 
 	ASSIGN
-		next(blockTransactions) := {listTransaction[0][1],listTransaction[1][1], listTransaction[2][1]};
+		next(blockTransactions) := {listTransaction[1][1],listTransaction[2][1], listTransaction[3][1]};
 		init(id) := 1;
 		init(timestamp) := 1;
-		next(idB) := idB + 1;
+		next(blockId) := blockId + 1;
 		next(timestamp) := timestamp + 1;
-		next(blockCreation) := listBlock[idB] = {idB, timestamp, blockTransactions, previousBlockId};						
+		next(blockCreation) := listBlock[blockId] = {blockId, timestamp, blockTransactions, previousBlockId};						
 
 
 -- #TODO: Define a peer-to-peer network.
 
-MODULE searchBlock(requester, adj1, adj2, adj3, listNode)
+MODULE searchBlock(requester, adj1, adj2, listNode)
 	
 	VAR
 		requester : integer;
-		listNode : array 1..5 of array 1..2 of integer;  --- Array of the node IDs and its last nodes.
+		
 
 	DEFINE
 
@@ -81,13 +136,6 @@ MODULE searchBlock(requester, adj1, adj2, adj3, listNode)
 						TRUE : 0;							
 					esac;
 
-		next(adj3) := case
-						requester = 1 : 5;										
-						requester = 3 : 4;
-						requester = 4 : 5;										
-						TRUE : 0;
-					esac;
-
 
 MODULE broadcast(sender, blockId)
 -- Step 4: Once a node created a block, it should be broadcasted to the entire network.
@@ -105,23 +153,21 @@ MODULE broadcast(sender, blockId)
 
 MODULE main
 	VAR
-		listBalance : array 1..5 of integer;
+		user1, user2, user3 : array 1..2 of integer;
 		listTransaction : array 1..10 of array 1..4 of integer;
-		primeNumber : integer;
-		n : integer;
 
+		t1 : createTransaction(1, user1, user2, 3, listTransaction);
+		t2 : createTransaction(2, user1, user3, 5, listTransaction);
+		t3 : createTransaction(3, user2, user1, 7, listTransaction);
+		t4 : createTransaction(4, user3, user2, 4, listTransaction);
+		t5 : createTransaction(5, user1, user2, 12, listTransaction);
 
-		user : array 1..5 of unsigned word[1] := {a, b, c, d, e};
-
-		t1 : process createTransaction(1, user[1],user[2], 35, listBalance, listTransaction);
-		t2 : process createTransaction(primeNumber, user[2],user[3], 25, listBalance, listTransaction);
-		t3 : process createTransaction(primeNumber, user[3],user[4], 15, listBalance, listTransaction);
-		t4 : process createTransaction(primeNumber, user[4],user[5], 05, listBalance, listTransaction);
-		t5 : process createTransaction(primeNumber, user[5],user[1], 35, listBalance, listTransaction);
-
-
+	DEFINE
+		init(user1) : {1, 8};
+		init(user2) : {2, 5};
+		init(user3) : {3, 15};
 	ASSIGN
-		listBalance[1] := 50;
+
 		--init(n) := 1;
 		--next(n) := case 
 		--			(n mod 2) != 0 & (n mod 3) != 0 & (n mod 5) != 0 & (n mod 7 != 0): primeNumber := n;

@@ -1,4 +1,6 @@
 MODULE createNetwork
+-- STEP 1: Create a peer-to-peer network of 5 nodes.
+
 	VAR
 		node1 : 0..5;
 		node2 : 0..5;
@@ -39,49 +41,132 @@ MODULE createTransaction(transactionId, from, to, amount, listTransaction)
 
 	VAR		
 		transaction : array 1..4 of 1..5;
-		fromHasBalance : boolean;
-		isValid : boolean;
-
+		--fromHasBalance : boolean;
+	
 	DEFINE
-		fromHasBalance :=  from[2] >= amount; --- Does the sender have enough balance?
-		isValid := fromHasBalance & from != to;
+		fromHasBalance :=  from[2] >= amount; --- Does the sender user have enough balance?
 
 	
 	ASSIGN
 		next(from[2]) := case
-							isValid : from[2] - amount;
+							fromHasBalance : from[2] - amount;
 							TRUE : from[2];
 						esac;
 
 		next(to[2]) := case
-						isValid : to[2] + amount;
+						fromHasBalance : to[2] + amount;
 						TRUE : to[2];
 					esac;
 
 
-		next(listTransaction[1]) := case
-										listTransaction[1][1] = 0 : {transactionId, from, to, amount};
-										TRUE : listTransaction[1];
+		next(listTransaction[1][1]) := case
+										listTransaction[1][1] = 0 : transactionId;
+										TRUE : listTransaction[1][1];
 									esac;
 
-		next(listTransaction[2]) := case
-										listTransaction[2][1] = 0 & listTransaction[1][1] < transactionId: {transactionId, from, to, amount};
-										TRUE : listTransaction[2];
+		next(listTransaction[1][2]) := case
+										listTransaction[1][1] = 0 : from;
+										TRUE : listTransaction[1][2];
 									esac;
 
-		next(listTransaction[3]) := case
-										listTransaction[3][1] = 0 & listTransaction[2][1] < transactionId : {transactionId, from, to, amount};
-										TRUE : listTransaction[3];
+
+		next(listTransaction[1][3]) := case
+										listTransaction[1][1] = 0 : to;
+										TRUE : listTransaction[1][3];
 									esac;
 
-		next(listTransaction[4]) := case
-										listTransaction[4][1] = 0 & listTransaction[3][1] < transactionId : {transactionId, from, to, amount};
-										TRUE : listTransaction[4];
+		next(listTransaction[1][4]) := case
+										listTransaction[1][1] = 0 & listTransaction[1][1] < transactionId: amount;
+										TRUE : listTransaction[1][4];
 									esac;
 
-		next(listTransaction[5]) := case
-										listTransaction[5][1] = 0 & listTransaction[4][1] < transactionId : {transactionId, from, to, amount};
-										TRUE : listTransaction[5];
+
+
+		next(listTransaction[2][1]) := case
+										listTransaction[2][1] = 0 & listTransaction[1][1] < transactionId: transactionId;
+										TRUE : listTransaction[2][1];
+									esac;
+
+		next(listTransaction[2][2]) := case
+										listTransaction[2][1] = 0 & listTransaction[1][1] < transactionId: from;
+										TRUE : listTransaction[2][2];
+									esac;
+
+
+		next(listTransaction[2][3]) := case
+										listTransaction[2][1] = 0 & listTransaction[1][1] < transactionId: to;
+										TRUE : listTransaction[2][3];
+									esac;
+
+		next(listTransaction[2][4]) := case
+										listTransaction[2][1] = 0 & listTransaction[1][1] < transactionId: amount;
+										TRUE : listTransaction[2][4];
+									esac;
+
+
+		next(listTransaction[3][1]) := case
+										listTransaction[3][1] = 0 & listTransaction[2][1] < transactionId: transactionId;
+										TRUE : listTransaction[3][1];
+									esac;
+
+		next(listTransaction[3][2]) := case
+										listTransaction[3][1] = 0 & listTransaction[2][1] < transactionId: from;
+										TRUE : listTransaction[3][2];
+									esac;
+
+
+		next(listTransaction[3][3]) := case
+										listTransaction[3][1] = 0 & listTransaction[2][1] < transactionId: to;
+										TRUE : listTransaction[3][3];
+									esac;
+
+		next(listTransaction[3][4]) := case
+										listTransaction[4][1] = 0 & listTransaction[2][1] < transactionId: amount;
+										TRUE : listTransaction[3][4];
+									esac;
+		
+
+		next(listTransaction[4][1]) := case
+										listTransaction[4][1] = 0 & listTransaction[3][1] < transactionId: transactionId;
+										TRUE : listTransaction[4][1];
+									esac;
+
+		next(listTransaction[4][2]) := case
+										listTransaction[4][1] = 0 & listTransaction[3][1] < transactionId: from;
+										TRUE : listTransaction[4][2];
+									esac;
+
+
+		next(listTransaction[4][3]) := case
+										listTransaction[4][1] = 0 & listTransaction[3][1] < transactionId: to;
+										TRUE : listTransaction[4][3];
+									esac;
+
+		next(listTransaction[4][4]) := case
+										listTransaction[2][1] = 0 & listTransaction[3][1] < transactionId: amount;
+										TRUE : listTransaction[4][4];
+									esac;
+
+
+		next(listTransaction[5][1]) := case
+										listTransaction[5][1] = 0 & listTransaction[4][1] < transactionId: transactionId;
+										TRUE : listTransaction[5][1];
+									esac;
+
+		next(listTransaction[5][2]) := case
+										listTransaction[5][1] = 0 & listTransaction[4][1] < transactionId: from;
+										TRUE : listTransaction[5][2];
+									esac;
+
+
+		next(listTransaction[5][3]) := case
+										listTransaction[5][1] = 0 & listTransaction[4][1] < transactionId: to;
+										TRUE : listTransaction[5][3];
+									esac;
+
+		next(listTransaction[5][4]) := case
+										listTransaction[5][1] = 0 & listTransaction[4][1] < transactionId: amount;
+										TRUE : listTransaction[5][4];
 									esac;
 
 -- Step 2: #TODO: Should have a MODULE to encrypt transactions.
@@ -172,7 +257,7 @@ MODULE main
 		user1 : array 1..2 of 1..100;
 		user2 : array 1..2 of 1..100;
 		user3 : array 1..2 of 1..100;
-		listTransaction : array 1..10 of array 1..4 of 1..100;
+		listTransaction : array 1..10 of array 1..4 of 1..100;  --listTransaction: [ID, from, to, amount]
 
 		t1 : createTransaction(1, user1, user2, 3, listTransaction);
 		t2 : createTransaction(2, user1, user3, 5, listTransaction);
@@ -181,6 +266,9 @@ MODULE main
 		t5 : createTransaction(5, user1, user2, 12, listTransaction);
 
 	ASSIGN
-		init(user1) := {1, 8};
-		init(user2) := {2, 5};
-		init(user3) := {3, 15};
+		init(user1[1]) := 1;
+		init(user1[2]) := 8;
+		init(user2[1]) := 2;
+		init(user2[2]) := 5;
+		init(user3[1]) := 3;
+		init(user3[2]) := 15;

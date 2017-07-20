@@ -2,13 +2,13 @@ MODULE createNetwork
 -- STEP 1: Create a peer-to-peer network of 5 nodes.
 
 	VAR
-		node1 : 0..5;
-		node2 : 0..5;
-		node3 : 0..5;
-		node4 : 0..5;
-		node5 : 0..5; 
-		node6 : 0..5;
-		node7 : 0..5;
+		node1 : integer;
+		node2 : integer;
+		node3 : integer;
+		node4 : integer;
+		node5 : integer; 
+		node6 : integer;
+		node7 : integer;
 		adj1 : word[5];
 		adj2 : word[5];
 
@@ -36,18 +36,29 @@ MODULE createNetwork
 					esac;
 
 
+MODULE createUsers (id, balance)
+
+	VAR
+		user : array 1..2 of integer;
+	
+	DEFINE
+		user[1] := id;
+		user[2] := balance;
+
+
+
 MODULE createTransaction(transactionId, from, to, amount, listTransaction)
 --Step 2: A sender and a receiver create a transaction. It's just a value transfer from one to another.
 
 	VAR		
-		transaction : array 1..4 of 1..5;
-		--fromHasBalance : boolean;
+		transaction : array 1..4 of integer;		
 	
 	DEFINE
 		fromHasBalance :=  from[2] >= amount; --- Does the sender user have enough balance?
 
 	
 	ASSIGN
+	
 		next(from[2]) := case
 							fromHasBalance : from[2] - amount;
 							TRUE : from[2];
@@ -55,15 +66,20 @@ MODULE createTransaction(transactionId, from, to, amount, listTransaction)
 
 		next(to[2]) := case
 						fromHasBalance : to[2] + amount;
-						TRUE : to[2];
+						TRUE : 
+						to[2];
 					esac;
 
+		
+		-- FEITO COM IF --
+		next(listTransaction[1][1]) := listTransaction[1][1] = 0 ? transactionId : listTransaction[1][1];
 
-		next(listTransaction[1][1]) := case
-										listTransaction[1][1] = 0 : transactionId;
-										TRUE : listTransaction[1][1];
-									esac;
 
+		/-- next(listTransaction[1][1]) := case
+		--								listTransaction[1][1] = 0 : transactionId;
+		--								TRUE : listTransaction[1][1];
+		--							esac;
+		--/
 		next(listTransaction[1][2]) := case
 										listTransaction[1][1] = 0 : from;
 										TRUE : listTransaction[1][2];
@@ -79,7 +95,6 @@ MODULE createTransaction(transactionId, from, to, amount, listTransaction)
 										listTransaction[1][1] = 0 & listTransaction[1][1] < transactionId: amount;
 										TRUE : listTransaction[1][4];
 									esac;
-
 
 
 		next(listTransaction[2][1]) := case
@@ -169,6 +184,11 @@ MODULE createTransaction(transactionId, from, to, amount, listTransaction)
 										TRUE : listTransaction[5][4];
 									esac;
 
+
+-------TODO: Garantir que duas transações para o mesmo usuário não gerem inconsistências.
+
+
+
 -- Step 2: #TODO: Should have a MODULE to encrypt transactions.
 --			Ideally it would be the same to encrypt everything (transactions, blocks, addresses...).
 
@@ -178,12 +198,12 @@ MODULE createBlock (blockId, listTransaction, previousBlockId)
 --		   Each block contains into it an identification of the previous block, wich chains the blocks.
 
 	VAR
-		blockId : 1..3;
+		blockId : integer;
 		blockCreation : boolean;
-		timestamp : 1..10;
+		timestamp : integer;
 		previousBlockId : 1..3;
 		listBlock : array 1..10 of array 1..4 of unsigned word[10];
-		blockTransactions : array 1..3 of 1..3;
+		blockTransactions : array 1..3 of integer;
 
 
 	ASSIGN
@@ -194,8 +214,6 @@ MODULE createBlock (blockId, listTransaction, previousBlockId)
 		next(timestamp) := timestamp + 1;
 		next(blockCreation) := listBlock[blockId] = {blockId, timestamp, blockTransactions, previousBlockId};						
 
-
--- #TODO: Define a peer-to-peer network.
 
 MODULE searchBlock(requester, adj1, adj2, listNode)
 	
@@ -254,21 +272,18 @@ MODULE broadcast(sender, blockId)
 
 MODULE main
 	VAR
-		user1 : array 1..2 of 1..100;
-		user2 : array 1..2 of 1..100;
-		user3 : array 1..2 of 1..100;
-		listTransaction : array 1..10 of array 1..4 of 1..100;  --listTransaction: [ID, from, to, amount]
-
+		listTransaction : array 1..10 of array 1..4 of integer;  --listTransaction: [ID, from, to, amount]
+		
+		user1 : createUsers(1,8);
+		user2 : createUsers(2,3);
+		user3 : createUsers(3,15);
+		
 		t1 : createTransaction(1, user1, user2, 3, listTransaction);
 		t2 : createTransaction(2, user1, user3, 5, listTransaction);
 		t3 : createTransaction(3, user2, user1, 7, listTransaction);
 		t4 : createTransaction(4, user3, user2, 4, listTransaction);
 		t5 : createTransaction(5, user1, user2, 12, listTransaction);
 
-	ASSIGN
-		init(user1[1]) := 1;
-		init(user1[2]) := 8;
-		init(user2[1]) := 2;
-		init(user2[2]) := 5;
-		init(user3[1]) := 3;
-		init(user3[2]) := 15;
+	
+
+		

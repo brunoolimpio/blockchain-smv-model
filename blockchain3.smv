@@ -1,0 +1,12 @@
+MODULE network
+
+	VAR
+		node: word[5];
+		send: {0,1};
+		received: {0,1};
+		IPs: array 1..3 of integer;
+	
+	ASSIGN
+		init(send) := 0;
+
+

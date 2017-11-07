@@ -1,12 +1,62 @@
-MODULE network
+MODULE P2PNetwork()
 
 	VAR
-		node: word[5];
-		send: {0,1};
-		received: {0,1};
-		IPs: array 1..3 of integer;
+		IPSent: {0,1};
+		IPReceived: {0,1};
+		connectSeed: {0,1};
+		versionSent: {0,1};
+		verack: {0,1};
 	
 	ASSIGN
-		init(send) := 0;
+		init(IPSent) := 0;
+		init(IPReceived) := 0;
+		init(connectSeed) := 0;
+		init(versionSent) := 0;
+		init(verack) := 0;
 
 
+		next(IPSent) := {0,1};
+		next(IPReceived) := IPSent = 1 ? {0,1} : 0;
+		next(connectSeed) := (IPSent = 1 & IPReceived = 1) ? 1 : 0;
+		next(versionSent) := connectSeed = 1 ? {0,1} : 0;
+		next(verack) := versionSent = 1 ? {0,1} : 0;
+
+
+
+MODULE createUser(initBalance)
+	VAR
+		balance : integer;
+
+	ASSIGN
+		init(balance) := initBalance;
+
+
+
+MODULE createTransaction(id, from, to, amount)
+	VAR
+		transaction : array 1..10 of array 1..2 of integer; --Array of [ID, used?]
+		used : {0,1};
+
+	DEFINE		
+		fromHasBalance :=  from.balance >= amount; --- Does the sender user have enough balance?
+	
+	ASSIGN	
+		init(used) := 0;
+		next(from.balance) := fromHasBalance ? from.balance - amount : from.balance;
+		next(to.balance) := fromHasBalance ? to.balance + amount : to.balance;
+		next(transaction[id][1]) := id;
+		next(transaction[id][2]) := used;
+
+
+MODULE main
+	VAR
+		no1 : P2PNetwork();
+		no2 : P2PNetwork();
+		no3 : P2PNetwork();
+		no4 : P2PNetwork();
+		no5 : P2PNetwork();
+		user1 : createUser(0);
+		user2 : createUser(10);
+		user3 : createUser(6);
+		user4 : createUser(35);
+		tx1 : createTransaction(1, user1, user3, 10);

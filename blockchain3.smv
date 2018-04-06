@@ -23,7 +23,7 @@ MODULE P2PNetwork()
 		next(verack) := versionSent = TRUE ? {TRUE, FALSE} : FALSE;
 
 
-MODULE user(initBalance)
+MODULE createUser(initBalance)
 	VAR
 		balance : integer;
 
@@ -31,9 +31,16 @@ MODULE user(initBalance)
 		init(balance) := initBalance;
 
 
+--MODULE createTransaction2(id, inCounter, inputs, outCounter, outputs, lockTime)
+
+	-- Does it make sense?
+	-- Txn have inputs and outputs, not from and to.
+
+
+
 MODULE createTransaction(id, from, to, amount) --id must be a prime number
 	VAR
-		transaction : array 1..10 of array 1..2 of integer; --Array of [ID, used?]
+		transaction : array 1..10 of array 1..5 of integer; --Array of [ID, used?, from, to, amount]
 		used : {0,1}; -- Defined as a set instead of boolean in order to use as "transaction" array assignment.
 
 	DEFINE		
@@ -44,36 +51,59 @@ MODULE createTransaction(id, from, to, amount) --id must be a prime number
 		next(from.balance) := fromHasBalance ? from.balance - amount : from.balance;
 		next(to.balance) := fromHasBalance ? to.balance + amount : to.balance;
 		next(transaction[id][1]) := id;
-		next(transaction[id][2]) := used;
+		--next(transaction[id][2]) := from;   PORQUE ESTÃO QUEBRANDO??
+		--next(transaction[id][3]) := to;
+		next(transaction[id][5]) := used;
 		next(used) := fromHasBalance ? 1 : 0; 
 
--- !! Pesquisar Registro para alterar estado do "used".
+
+
+MODULE verifyTransaction() -- Needed???
+ 
+	VAR
+		inScriptSig : word[32];
+		outScriptPubKey : word[32]; 
+ -- To do:Primeiro implementar como uma fórmula, depois, se necessário abrir num módulo!
+
+ -- Check: Inputs must be equal or greater than outputs.
 
 MODULE CreateBlock(hashPrevBlock, transactions)
 -- Steps do create a block ---
 -- !! Check block messages in https://en.bitcoin.it/wiki/Protocol_rules#.22block.22_messages
 -- 1) Block structure (Magic nº, Blocksize, Blockheader, TransactionCounter, Transactions) 
--- 2) Block Header (Version, hashPrevBlock, hashMerkleRoot, Time, Bits, Nonce)
+-- 2) Block Header (Version, hashPrevBlock, hashMerkleTree, Time, Bits, Nonce)
 -- 3) Transactions(list containing hashes all transactions inside the block)
+	
+	CONSTANTS
+		magicNo;
+
 	VAR
 		
-		hashMerkleRoot: integer;
-		txnListNotEmpty: boolean;
+		blockSize: integer;
+		transactionCounter: integer;
+		transactionsList: array 1..10 of word[32];
+		version: integer;
+		hashPrevBlock: word[64];
+		hashMerkleTree: word[64];
+		time: integer;  -- current timestamp
+		bits: integer;  -- Current target to the difficulty;
+		txnListEmpty: boolean;
 		blockHash: word[32];
 		blockHashSatisfyNonce: boolean;
 		expired: boolean;
-		transactionsList: array 1..10 of integer;
-
-	DEFINE
-		hashMerkleRoot := toint(transactions[1]) * toint(transactions[2]) * toint(transactions[3]);
-		-- Quantificar o tamanho de transactions com nºs primos.
-		txnListNotEmpty := transactions[1] != 0 ? TRUE : FALSE;
-		blockHashSatisfyNonce := [TRUE, FALSE];
-		transactionsList := transactions;
-		--blockHash := hashPrevBlock 	+ uwconst(hashMerkleRoot);  --Corrigir conversão para inteiro.
-	ASSIGN
 		
 
+	DEFINE
+		magicNo := "0xD9B4BEF9";  -- This is the Magic No, and it's always the same.
+		hashMerkleTree := "2b12fcf1b09288fcaff797d71e950e71ae42b91e8bdb2304758dfcffc2b620e3"; --Just an arbitrary hash to test de model.
+		txnListEmpty := transactions[1] = 0 ? TRUE : FALSE;
+		blockHashSatisfyNonce := [TRUE, FALSE];
+		transactionsList := transactions;
+		--verifiedTransaction := 		--FORMULA de verificação de transação.
+
+	ASSIGN
+		init(TransactionCounter) := 0;
+		init(txnListEmpty) := TRUE;
 
 
 
@@ -85,14 +115,14 @@ MODULE main
 		no4 : P2PNetwork();
 		no5 : P2PNetwork();
 		no6 : P2PNetwork();
-		user1 : user(0);
-		user2 : user(10);
-		user3 : user(6);
-		user4 : user(35);
+		user1 : createUser(0);
+		user2 : createUser(10);
+		user3 : createUser(6);
+		user4 : createUser(35);
 		tx1 : createTransaction(2, user1, user3, 10);
 		tx2 : createTransaction(3, user4, user2, 19);
 		--tx3 : createTransaction(3, user3, user4, 11);
 		--tx4 : createTransaction(4, user2, user1, 6);
-		--tx5 : createTransaction(5, user4, user3, 12);
+		---tx5 : createTransaction(5, user4, user3, 12);
 
 

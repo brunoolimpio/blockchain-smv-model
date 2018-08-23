@@ -1,0 +1,90 @@
+MODULE P2PNetwork()
+
+	VAR
+		IPSent: boolean;
+		IPReceived: boolean;
+		connectSeed: boolean;
+		versionSent: boolean;
+		verack: boolean;
+	
+	ASSIGN
+		init(IPSent) := FALSE;
+		init(IPReceived) := FALSE;
+		init(connectSeed) := FALSE;
+		init(versionSent) := FALSE;
+		init(verack) := FALSE;
+
+
+
+		next(IPSent) := {TRUE, FALSE};
+		next(IPReceived) := IPSent = TRUE ? {TRUE, FALSE} : FALSE;
+		next(connectSeed) := (IPSent = TRUE & IPReceived = TRUE) ? TRUE : FALSE;
+		next(versionSent) := connectSeed = TRUE ? {TRUE, FALSE} : FALSE;
+		next(verack) := versionSent = TRUE ? {TRUE, FALSE} : FALSE;
+
+
+MODULE createUsers(iduser1, initBalance1, iduser2, initBalance2, iduser3, initBalance3, iduser4, initBalance4)
+	VAR
+		user1 : integer;
+		balance1 : integer;
+		user2 : integer;
+		balance2 : integer;
+		user3 : integer;
+		balance3 : integer;
+		user4 : integer;
+		balance4 : integer;
+		transactions : createTransactions(1, user1, user3, 10, 2, user4, user2, 19, 3, user3, user4, 11, 4, user2, user1, 6);
+
+	ASSIGN
+		init(user1) := iduser1;
+		init(balance1) := initBalance1;
+		init(user2) := iduser2;
+		init(balance2) := initBalance2;
+		init(user3) := iduser3;
+		init(balance3) := initBalance3;
+		init(user4) := iduser4;
+		init(balance4) := initBalance4;
+
+
+MODULE createTransactions(id1, from1, to1, amount1, id2, from2, to, amount2, id3, from3, to3, amount3, id4, from4, to4, amount4)
+	VAR
+		used : {0,1}; -- Defined as a set instead of boolean in order to use as "transaction" array assignment.
+		transactionsList : array 1..4 of array 1..5 of integer; -- Array of transactions [id, from, to, amount, used?]
+
+	DEFINE		
+		fromHasBalance1 :=  createUsers.balance1 >= amount1; --- Does the sender user have enough balance?
+		fromHasBalance2 :=  balance2 >= amount2; --- Does the sender user have enough balance?
+		fromHasBalance3 :=  balance3 >= amount3; --- Does the sender user have enough balance?
+		fromHasBalance4 :=  balance4 >= amount4; --- Does the sender user have enough balance?
+
+
+	ASSIGN
+		init(transactionsList[1][1]) := fromHasBalance1 ? id1 : 0;
+		init(transactionsList[1][2]) := fromHasBalance1 ? from1 : 0;
+		init(transactionsList[1][3]) := fromHasBalance1 ? to1 : 0;
+		init(transactionsList[1][4]) := fromHasBalance1 ? amount1 : 0;
+		init(transactionsList[1][5]) := 0;
+
+
+		init(transactionsList[2][1]) := fromHasBalance2 ? id2 : 0;
+		init(transactionsList[2][2]) := fromHasBalance2 ? from2 : 0;
+		init(transactionsList[2][3]) := fromHasBalance2 ? to2 : 0;
+		init(transactionsList[2][4]) := fromHasBalance2 ? amount2 : 0;
+		init(transactionsList[2][5]) := 0;
+
+		init(transactionsList[3][1]) := fromHasBalance3 ? id3 : 0;
+		init(transactionsList[3][2]) := fromHasBalance3 ? from3 : 0;
+		init(transactionsList[3][3]) := fromHasBalance3 ? to3 : 0;
+		init(transactionsList[3][4]) := fromHasBalance3 ? amount3 : 0;
+		init(transactionsList[3][5]) := 0;
+
+		init(transactionsList[4][1]) := fromHasBalance4 ? id4 : 0;
+		init(transactionsList[4][2]) := fromHasBalance4 ? from4 : 0;
+		init(transactionsList[4][3]) := fromHasBalance4 ? to4 : 0;
+		init(transactionsList[4][4]) := fromHasBalance4 ? amount4 : 0;
+		init(transactionsList[4][5]) := 0;
+
+MODULE main
+
+	VAR
+		blockchain : createUsers(1, 1, 2, 10, 3, 12, 4, 35);

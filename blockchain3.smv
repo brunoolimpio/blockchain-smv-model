@@ -74,7 +74,7 @@ MODULE CreateBlock(idlastBlock, txa, txb)
 		--blockHash := unsigned word[32] (hash);
 
 	ASSIGN
-		init(nonce) := 00000;
+		init(nonce) := 0000;
 
 
 MODULE main
@@ -117,7 +117,7 @@ MODULE main
 -- Criar uma matriz de saldos do usuário.
 -- Criar um contador pra matriz de de transações e usar um if ou case pra acessar o índice.
 -- Estudar INVAR para constraints do modelo (ex. saldo <=0)
+-- Tentar no módulo P2P chamar o módulo pra atualizar o índice
 
--- Explicar uso MSAT!!
 
 -- COMANDO PARA RODAR O SMV: go_msat; msat_pick_state; msat_simulate -v;

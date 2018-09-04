@@ -1,4 +1,7 @@
-MODULE P2PNetwork()
+MODULE createNode(idNode)
+
+	FROZENVAR
+		id: integer;
 
 	VAR
 		IPSent: boolean;
@@ -6,14 +9,20 @@ MODULE P2PNetwork()
 		connectSeed: boolean;
 		versionSent: boolean;
 		verack: boolean;
+		networkOK: boolean;
+		lastBlockId: integer;
+		--lock : boolean;
+
 	
 	ASSIGN
+		init(id) := idNode;
 		init(IPSent) := FALSE;
 		init(IPReceived) := FALSE;
 		init(connectSeed) := FALSE;
 		init(versionSent) := FALSE;
 		init(verack) := FALSE;
-
+		init(networkOK) := FALSE;
+		init(lastBlockId) := 0;
 
 
 		next(IPSent) := {TRUE, FALSE};
@@ -21,70 +30,119 @@ MODULE P2PNetwork()
 		next(connectSeed) := (IPSent = TRUE & IPReceived = TRUE) ? TRUE : FALSE;
 		next(versionSent) := connectSeed = TRUE ? {TRUE, FALSE} : FALSE;
 		next(verack) := versionSent = TRUE ? {TRUE, FALSE} : FALSE;
+		next(networkOK) := verack = TRUE ? TRUE : FALSE;
 
+MODULE createUser(idUser, initBalance)
+	
+	FROZENVAR
+		id : integer;
 
-MODULE createUsers(iduser1, initBalance1, iduser2, initBalance2, iduser3, initBalance3, iduser4, initBalance4)
 	VAR
-		user1 : integer;
-		balance1 : integer;
-		user2 : integer;
-		balance2 : integer;
-		user3 : integer;
-		balance3 : integer;
-		user4 : integer;
-		balance4 : integer;
-		transactions : createTransactions(1, user1, user3, 10, 2, user4, user2, 19, 3, user3, user4, 11, 4, user2, user1, 6);
+		balance : integer;
 
 	ASSIGN
-		init(user1) := iduser1;
-		init(balance1) := initBalance1;
-		init(user2) := iduser2;
-		init(balance2) := initBalance2;
-		init(user3) := iduser3;
-		init(balance3) := initBalance3;
-		init(user4) := iduser4;
-		init(balance4) := initBalance4;
+		init(id) := idUser;
+		init(balance) := initBalance;
 
 
-MODULE createTransactions(id1, from1, to1, amount1, id2, from2, to, amount2, id3, from3, to3, amount3, id4, from4, to4, amount4)
+MODULE createTransaction(idTrans, from, to, amount)
+	
+	FROZENVAR
+		id : integer;
+		blockId : integer;
+
+
 	VAR
-		used : {0,1}; -- Defined as a set instead of boolean in order to use as "transaction" array assignment.
-		transactionsList : array 1..4 of array 1..5 of integer; -- Array of transactions [id, from, to, amount, used?]
+		validTransaction : boolean;
 
-	DEFINE		
-		fromHasBalance1 :=  createUsers.balance1 >= amount1; --- Does the sender user have enough balance?
-		fromHasBalance2 :=  balance2 >= amount2; --- Does the sender user have enough balance?
-		fromHasBalance3 :=  balance3 >= amount3; --- Does the sender user have enough balance?
-		fromHasBalance4 :=  balance4 >= amount4; --- Does the sender user have enough balance?
+	DEFINE
+		fromHasBalance :=  from.balance >= amount; --- Does the sender user have enough balance?
+		newfromBalance := fromHasBalance? from.balance - amount : from.balance;
+		newToBalance := fromHasBalance? to.balance + amount : to.balance;
+
+	ASSIGN	
+		init(id) := idTrans;
+		validTransaction := fromHasBalance ? TRUE : FALSE;
+		next(from.balance) := validTransaction ? newfromBalance : from.balance;
+		next(to.balance) := validTransaction ? newToBalance : to.balance;
+
+MODULE createBlock(blockId, txa, txb)
+		
+	FROZENVAR
+		nonce : integer;
+		id : integer;
+	VAR
+		lastBlock : integer;
+	DEFINE
+		hash := signed word [5](nonce) + signed word [5](txa.id) + signed word [5](txb.id); --+ unsigned word [5](hashPrevBlock);
+		hash2 := signed word [5](nonce) + signed word [5](txb.id) + signed word [5](txa.id); --+ unsigned word [5](hashPrevBlock);
 
 
 	ASSIGN
-		init(transactionsList[1][1]) := fromHasBalance1 ? id1 : 0;
-		init(transactionsList[1][2]) := fromHasBalance1 ? from1 : 0;
-		init(transactionsList[1][3]) := fromHasBalance1 ? to1 : 0;
-		init(transactionsList[1][4]) := fromHasBalance1 ? amount1 : 0;
-		init(transactionsList[1][5]) := 0;
+		init(nonce) := 0000019;
+		init(id) := blockId;
+		init(lastBlock) := 0;
+		next(lastBlock) := blockId - 1;
+		init(txa.blockId) := id;
+		init(txb.blockId) := id;
+
+MODULE updateNode(node)
+	VAR
+		lastBlockOnNode : integer;
+
+	DEFINE
+		nodeOnline := node.networkOK ? TRUE : FALSE;
 
 
-		init(transactionsList[2][1]) := fromHasBalance2 ? id2 : 0;
-		init(transactionsList[2][2]) := fromHasBalance2 ? from2 : 0;
-		init(transactionsList[2][3]) := fromHasBalance2 ? to2 : 0;
-		init(transactionsList[2][4]) := fromHasBalance2 ? amount2 : 0;
-		init(transactionsList[2][5]) := 0;
-
-		init(transactionsList[3][1]) := fromHasBalance3 ? id3 : 0;
-		init(transactionsList[3][2]) := fromHasBalance3 ? from3 : 0;
-		init(transactionsList[3][3]) := fromHasBalance3 ? to3 : 0;
-		init(transactionsList[3][4]) := fromHasBalance3 ? amount3 : 0;
-		init(transactionsList[3][5]) := 0;
-
-		init(transactionsList[4][1]) := fromHasBalance4 ? id4 : 0;
-		init(transactionsList[4][2]) := fromHasBalance4 ? from4 : 0;
-		init(transactionsList[4][3]) := fromHasBalance4 ? to4 : 0;
-		init(transactionsList[4][4]) := fromHasBalance4 ? amount4 : 0;
-		init(transactionsList[4][5]) := 0;
+	ASSIGN
+		init(lastBlockOnNode) := node.lastBlockId;
 
 MODULE main
-
 	VAR
-		blockchain : createUsers(1, 1, 2, 10, 3, 12, 4, 35);
+		node1 : createNode(1);
+		node2 : createNode(2);
+		node3 : createNode(3);
+		node4 : createNode(4);
+		node5 : createNode(5);
+		user1 : createUser(1, 1);
+		user2 : createUser(2, 10);
+		user3 : createUser(3, 12);
+		user4 : createUser(4, 35);
+		tx1 : createTransaction(01, user1, user3, 10);
+		tx2 : createTransaction(02, user4, user2, 19);
+		tx3 : process createTransaction(3, user3, user4, 11);
+		tx4 : process createTransaction(4, user2, user1, 6);
+		tx5 : process createTransaction(5, user4, user3, 12); 
+		block1 : createBlock(1, tx3, tx5);
+		block2 : createBlock(2, tx1, tx4);
+
+	
+
+	DEFINE
+
+	--INSERINDO TX1 na lista de transações --		
+		transactionsList[1][1] := tx1.validTransaction ? tx1.id : 0;
+		transactionsList[1][2] := tx1.validTransaction ? tx1.from.id : 0;
+		transactionsList[1][3] := tx1.validTransaction ? tx1.to.id : 0;
+		transactionsList[1][4] := tx1.validTransaction ? tx1.amount :0;
+
+	--INSERINDO TX2 na lista de transações --
+		transactionsList[2][1] := tx2.validTransaction ? tx2.id : 0;
+		transactionsList[2][2] := tx2.validTransaction ? tx2.from.id : 0;
+		transactionsList[2][3] := tx2.validTransaction ? tx2.to.id : 0;
+		transactionsList[2][4] := tx2.validTransaction ? tx2.amount : 0;
+
+--Gerador de compiladores - André Luiz
+
+
+-- Criar uma matriz de saldos do usuário.
+-- Criar um contador pra matriz de de transações e usar um if ou case pra acessar o índice.
+-- Estudar INVAR para constraints do modelo (ex. saldo <=0)
+-- Tentar no módulo P2P chamar o módulo pra atualizar o índice (lock)
+
+-- Explicar o  motivo da escolha do MSAT (só ele suporta)!!
+-- Entender o motivo de não rodar com BMC.
+
+
+-- COMANDO PARA RODAR O SMV: reset; go_msat; msat_pick_state; msat_simulate -v;
+-- COMANDO ALTERNATIVO: reset; go_msat; msat_pick_state -v;

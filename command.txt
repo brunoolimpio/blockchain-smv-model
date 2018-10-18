@@ -1,3 +1,3 @@
 go_msat;
 msat_pick_state;
-msat_simulate;
+msat_simulate -v;

@@ -1,4 +1,4 @@
-MODULE createNode(idNode)
+MODULE createNode(nodeId)
 
 	FROZENVAR
 		id: integer;
@@ -15,7 +15,7 @@ MODULE createNode(idNode)
 
 	
 	ASSIGN
-		init(id) := idNode;
+		init(id) := nodeId;
 		init(IPSent) := FALSE;
 		init(IPReceived) := FALSE;
 		init(connectSeed) := FALSE;
@@ -71,31 +71,42 @@ MODULE createBlock(blockId, txa, txb)
 	FROZENVAR
 		nonce : integer;
 		id : integer;
+		newestBlock : boolean;
 	VAR
-		lastBlock : integer;
+		previousBlock : integer;
+		update : updateBlockIndex(blockId);
 	DEFINE
 		hash := signed word [5](nonce) + signed word [5](txa.id) + signed word [5](txb.id); --+ unsigned word [5](hashPrevBlock);
 		hash2 := signed word [5](nonce) + signed word [5](txb.id) + signed word [5](txa.id); --+ unsigned word [5](hashPrevBlock);
-
+		
 
 	ASSIGN
 		init(nonce) := 0000019;
 		init(id) := blockId;
-		init(lastBlock) := 0;
-		next(lastBlock) := blockId - 1;
+		init(previousBlock) := blockId - 1;
+		next(previousBlock.newestBlock) := previousBlock > 0 ? FALSE : 0;
+		init(newestBlock) := TRUE;
 		init(txa.blockId) := id;
 		init(txb.blockId) := id;
 
-MODULE updateNode(node)
+MODULE updateBlockIndex(blockId)
+	VAR
+		lastBlock : integer;
+
+	ASSIGN
+		init(lastBlock) := blockId;
+
+MODULE updateNode(node, block)
 	VAR
 		lastBlockOnNode : integer;
 
 	DEFINE
 		nodeOnline := node.networkOK ? TRUE : FALSE;
-
+		isUpToDate := lastBlockOnNode >= block; -- 
 
 	ASSIGN
 		init(lastBlockOnNode) := node.lastBlockId;
+
 
 MODULE main
 	VAR
@@ -108,14 +119,16 @@ MODULE main
 		user2 : createUser(2, 10);
 		user3 : createUser(3, 12);
 		user4 : createUser(4, 35);
+		user5 : createUser(5, 22);
+		user6 : createUser(6, 2);
 		tx1 : createTransaction(01, user1, user3, 10);
 		tx2 : createTransaction(02, user4, user2, 19);
-		tx3 : process createTransaction(3, user3, user4, 11);
-		tx4 : process createTransaction(4, user2, user1, 6);
-		tx5 : process createTransaction(5, user4, user3, 12); 
+		tx3 : createTransaction(3, user5, user6, 11);
+		--tx4 : process createTransaction(4, user2, user1, 6);
+		--tx5 : process createTransaction(5, user4, user3, 12); 
 		block1 : createBlock(1, tx3, tx5);
 		block2 : createBlock(2, tx1, tx4);
-
+		--lastBlock : integer;
 	
 
 	DEFINE
@@ -132,17 +145,16 @@ MODULE main
 		transactionsList[2][3] := tx2.validTransaction ? tx2.to.id : 0;
 		transactionsList[2][4] := tx2.validTransaction ? tx2.amount : 0;
 
+		--blocksList[1] := block1.id;
 --Gerador de compiladores - André Luiz
 
 
 -- Criar uma matriz de saldos do usuário.
--- Criar um contador pra matriz de de transações e usar um if ou case pra acessar o índice.
+-- Criar um contador pra matriz de transações e usar um if ou case pra acessar o índice.
 -- Estudar INVAR para constraints do modelo (ex. saldo <=0)
 -- Tentar no módulo P2P chamar o módulo pra atualizar o índice (lock)
 
--- Explicar o  motivo da escolha do MSAT (só ele suporta)!!
--- Entender o motivo de não rodar com BMC.
-
+-- Pensar referência a mineração. Talvez separar criação de blocos e "comparação de hashes".
 
 -- COMANDO PARA RODAR O SMV: reset; go_msat; msat_pick_state; msat_simulate -v;
--- COMANDO ALTERNATIVO: reset; go_msat; msat_pick_state -v;
+-- COMANDO ALTERNATIVO: reset; go_msat; msat_simulatepick_state -v;

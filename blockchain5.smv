@@ -1,0 +1,87 @@
+MODULE createUser(idUser, initBalance)
+	
+	FROZENVAR
+		id : integer;
+
+	VAR
+		balance : integer;
+
+	ASSIGN
+		init(id) := idUser;
+		init(balance) := initBalance;
+
+	DEFINE
+		keep := next(balance) = balance;
+
+	TRANS
+		!update -> keep;
+
+
+MODULE createTransaction(idTrans, from, to, amount)
+	
+	FROZENVAR
+		id : integer;
+		blockId : integer;
+		
+	ASSIGN	
+		init(id) := idTrans;
+
+	DEFINE
+		validTransaction :=  from.balance >= amount; --- Does the sender user have enough balance?
+		newfromBalance := validTransaction ? from.balance - amount : from.balance;
+		newToBalance := validTransaction ? to.balance + amount : to.balance;
+
+
+	TRANS
+		validTransaction -> (next(from.balance)= from.balance - amount) & (next(to.balance)=to.balance + amount);
+
+
+MODULE createBlock(blockId, txa, txb)
+	FROZENVAR
+		id : integer;
+
+
+	ASSIGN
+		init(id) := blockId;
+		init(txa.blockId) := validBlock ? id : 0;
+		init(txb.blockId) := validBlock ? id : 0;
+
+	DEFINE
+		validBlock := txa.id != 0 & txb.id != 0 & txa.validTransaction & txb.validTransaction;
+		
+		--- COMO VERIFICA RECURSIVAMENTE?? ---
+		previousBlock := case
+						validBlock & id = 1 : 0;
+						validBlock & id > 1 : id - 1;
+						!validBlock : -1;
+						esac;	
+		hash := signed word [64](txa.id) + signed word [64](txb.id) + signed word[64](previousBlock);
+
+MODULE main
+	
+	VAR
+		user1 : createUser(1, 1);
+		user2 : createUser(2, 10);
+		user3 : createUser(3, 12);
+		user4 : createUser(4, 35);
+		user5 : createUser(5, 22);
+		user6 : createUser(6, 2);
+		tx1 : createTransaction(1, user1, user3, 10); -- Deve ser inválida!
+		tx2 : createTransaction(2, user4, user2, 19);
+		tx3 : createTransaction(3, user5, user6, 11);
+		tx4 :  createTransaction(4, user2, user1, 6);
+		tx5 :  createTransaction(5, user4, user3, 12);
+		tx6 :  createTransaction(6, user2, user1, 4);
+		block1 : createBlock(1, tx3, tx5);
+		block2 : createBlock(2, tx1, tx4); -- Deve ser inválido e estar fora da blockchain!
+		block3: createBlock(3, tx2, tx6);
+
+	DEFINE
+		user1.update := tx1.validTransaction | tx3.validTransaction;
+		user2.update := tx2.validTransaction | tx4.validTransaction;
+		user3.update := tx1.validTransaction | tx5.validTransaction;
+		user4.update := tx4.validTransaction | tx5.validTransaction;
+		user5.update := tx3.validTransaction;
+		user6.update := tx3.validTransaction;
+
+		

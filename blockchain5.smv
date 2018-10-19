@@ -40,6 +40,8 @@ MODULE createBlock(blockId, txa, txb)
 	FROZENVAR
 		id : integer;
 
+	VAR
+		updateChain : chainHeigh(self);
 
 	ASSIGN
 		init(id) := blockId;
@@ -48,14 +50,22 @@ MODULE createBlock(blockId, txa, txb)
 
 	DEFINE
 		validBlock := txa.id != 0 & txb.id != 0 & txa.validTransaction & txb.validTransaction;
-		
-		--- COMO VERIFICA RECURSIVAMENTE?? ---
-		previousBlock := case
-						validBlock & id = 1 : 0;
-						validBlock & id > 1 : id - 1;
-						!validBlock : -1;
-						esac;	
-		hash := signed word [64](txa.id) + signed word [64](txb.id) + signed word[64](previousBlock);
+		--previousBlock := chainHeigh.lastValidBlock;
+		hash := signed word [64](txa.id) + signed word [64](txb.id);  --+ signed word[64](previousBlock);
+
+MODULE	chainHeigh(block)
+	
+	VAR
+		lastValidBlock : integer;
+
+	DEFINE
+		keepHeigh := next(lastValidBlock) = lastValidBlock;
+		canUpdate := block.validBlock;
+	
+	TRANS
+		!keepHeigh -> (next(lastValidBlock)= (canUpdate ? block.id : lastValidBlock));
+
+
 
 MODULE main
 	
@@ -66,12 +76,14 @@ MODULE main
 		user4 : createUser(4, 35);
 		user5 : createUser(5, 22);
 		user6 : createUser(6, 2);
+
 		tx1 : createTransaction(1, user1, user3, 10); -- Deve ser inválida!
 		tx2 : createTransaction(2, user4, user2, 19);
 		tx3 : createTransaction(3, user5, user6, 11);
 		tx4 :  createTransaction(4, user2, user1, 6);
 		tx5 :  createTransaction(5, user4, user3, 12);
 		tx6 :  createTransaction(6, user2, user1, 4);
+
 		block1 : createBlock(1, tx3, tx5);
 		block2 : createBlock(2, tx1, tx4); -- Deve ser inválido e estar fora da blockchain!
 		block3: createBlock(3, tx2, tx6);
@@ -84,4 +96,10 @@ MODULE main
 		user5.update := tx3.validTransaction;
 		user6.update := tx3.validTransaction;
 
-		
+		--block1.updateChain.keepHeigh := validBlock;
+
+
+-- Criar um SPEC --
+
+
+-- COMANDO PARA RODAR O SMV: reset; go_msat; msat_pick_state; msat_simulate -v;

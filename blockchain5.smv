@@ -28,8 +28,8 @@ MODULE createTransaction(idTrans, from, to, amount)
 
 	DEFINE
 		validTransaction :=  from.balance >= amount; --- Does the sender user have enough balance?
-		newfromBalance := validTransaction ? from.balance - amount : from.balance;
-		newToBalance := validTransaction ? to.balance + amount : to.balance;
+		--newfromBalance := validTransaction ? from.balance - amount : from.balance;
+		--newToBalance := validTransaction ? to.balance + amount : to.balance;
 
 
 	TRANS
@@ -39,32 +39,16 @@ MODULE createTransaction(idTrans, from, to, amount)
 MODULE createBlock(blockId, txa, txb)
 	FROZENVAR
 		id : integer;
-
-	VAR
-		updateChain : chainHeigh(self);
-
+		
 	ASSIGN
 		init(id) := blockId;
 		init(txa.blockId) := validBlock ? id : 0;
 		init(txb.blockId) := validBlock ? id : 0;
+		
 
 	DEFINE
 		validBlock := txa.id != 0 & txb.id != 0 & txa.validTransaction & txb.validTransaction;
-		--previousBlock := chainHeigh.lastValidBlock;
-		hash := signed word [64](txa.id) + signed word [64](txb.id);  --+ signed word[64](previousBlock);
-
-MODULE	chainHeigh(block)
-	
-	VAR
-		lastValidBlock : integer;
-
-	DEFINE
-		keepHeigh := next(lastValidBlock) = lastValidBlock;
-		canUpdate := block.validBlock;
-	
-	TRANS
-		!keepHeigh -> (next(lastValidBlock)= (canUpdate ? block.id : lastValidBlock));
-
+		hash := validBlock ? (signed word [64](txa.id) :: signed word [64](txb.id) :: signed word[64](previousBlock)) : unsigned word[192](0);
 
 
 MODULE main
@@ -80,25 +64,57 @@ MODULE main
 		tx1 : createTransaction(1, user1, user3, 10); -- Deve ser inválida!
 		tx2 : createTransaction(2, user4, user2, 19);
 		tx3 : createTransaction(3, user5, user6, 11);
-		tx4 :  createTransaction(4, user2, user1, 6);
-		tx5 :  createTransaction(5, user4, user3, 12);
-		tx6 :  createTransaction(6, user2, user1, 4);
+		tx4 : createTransaction(4, user2, user1, 6);
+		tx5 : createTransaction(5, user4, user3, 12);
+		tx6 : createTransaction(6, user2, user1, 4);
+		tx7 : createTransaction(7, user6, user1, 1);
+		tx8 : createTransaction(8, user3, user4, 7);
 
 		block1 : createBlock(1, tx3, tx5);
 		block2 : createBlock(2, tx1, tx4); -- Deve ser inválido e estar fora da blockchain!
-		block3: createBlock(3, tx2, tx6);
+		block3 : createBlock(3, tx2, tx6);
+		block4 : createBlock(4, tx7, tx8);
+
+
 
 	DEFINE
-		user1.update := tx1.validTransaction | tx3.validTransaction;
-		user2.update := tx2.validTransaction | tx4.validTransaction;
-		user3.update := tx1.validTransaction | tx5.validTransaction;
-		user4.update := tx4.validTransaction | tx5.validTransaction;
+		user1.update := tx1.validTransaction | tx4.validTransaction | tx6.validTransaction | tx7.validTransaction;
+		user2.update := tx2.validTransaction | tx4.validTransaction | tx6.validTransaction;
+		user3.update := tx1.validTransaction | tx5.validTransaction | tx8.validTransaction;
+		user4.update := tx2.validTransaction | tx5.validTransaction | tx8.validTransaction;
 		user5.update := tx3.validTransaction;
-		user6.update := tx3.validTransaction;
+		user6.update := tx3.validTransaction | tx7.validTransaction;
+		
+		block1.previousBlock := block1.validBlock ? 0 : -1;
+		block2.previousBlock := case 
+									block2.validBlock : case
+															block1.validBlock : block1.id;
+														esac;
+									TRUE : -1;
+								esac;
+		block3.previousBlock := case
+									block3.validBlock : case
+															block2.validBlock : block2.id;
+															block1.validBlock : block1.id;
+														esac;
+									TRUE : -1;
+								esac;
 
-		--block1.updateChain.keepHeigh := validBlock;
+		block4.previousBlock := case
+									block4.validBlock : case
+															block3.validBlock : block3.id;
+															block2.validBlock : block2.id;
+															block1.validBlock : block1.id;
+														esac;
+									TRUE : -1;
+								esac;
 
 
+	--ASSIGN
+		--user1.balance := user1.balance - (tx1.validTransaction ? tx1.amount : 0) + ;
+
+
+	SPEC AG (user1.balance = 10);		
 -- Criar um SPEC --
 
 

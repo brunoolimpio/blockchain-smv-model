@@ -1,4 +1,0 @@
-reset; 
-go_msat;
-msat_pick_state;
-msat_simulate -v;

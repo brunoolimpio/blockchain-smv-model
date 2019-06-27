@@ -116,6 +116,7 @@ MODULE main
 		block2 : createBlock(2, tx1, tx4); -- SHOULD BE INVALID!
 		block3 : createBlock(3, tx2, tx6);
 		block4 : createBlock(4, tx7, tx8);
+---
 
 		updateNode1 : updateNode(node1, block3);
 		updateNode2 : updateNode(node2, block4);
@@ -159,26 +160,26 @@ MODULE main
 									TRUE : -1;
 								esac;
 
-		user1.newbalance := user1.balance - (tx1.blockId != 0 ? tx1.amount : 0) + 
+		user1.verifyBalance := user1.balance - (tx1.blockId != 0 ? tx1.amount : 0) + 
 									   (tx4.blockId != 0 ? tx4.amount : 0) + 
 									   (tx6.blockId != 0 ? tx6.amount : 0) + 
 									   (tx7.blockId != 0 ? tx7.amount : 0);
 		
-		user2.newbalance := user2.balance + (tx2.blockId != 0 ? tx2.amount : 0) -
+		user2.verifyBalance := user2.balance + (tx2.blockId != 0 ? tx2.amount : 0) -
 									   (tx4.blockId != 0 ? tx4.amount : 0) -
 									   (tx6.blockId != 0 ? tx6.amount : 0);
 
-		user3.newbalance := user3.balance + (tx1.blockId != 0 ? tx1.amount : 0) +
+		user3.verifyBalance := user3.balance + (tx1.blockId != 0 ? tx1.amount : 0) +
 									   (tx5.blockId != 0 ? tx5.amount : 0) -
 									   (tx8.blockId != 0 ? tx8.amount : 0);
 
-		user4.newbalance := user4.balance - (tx2.blockId != 0 ? tx2.amount : 0) -
+		user4.verifyBalance := user4.balance - (tx2.blockId != 0 ? tx2.amount : 0) -
 									   (tx5.blockId != 0 ? tx5.amount : 0) +
 									   (tx8.blockId != 0 ? tx8.amount : 0);
 
-		user5.newbalance := user5.balance + (tx3.blockId != 0 ? tx3.amount : 0);
+		user5.verifyBalance := user5.balance + (tx3.blockId != 0 ? tx3.amount : 0);
 
-		user6.newbalance := user6.balance + (tx3.blockId != 0 ? tx3.amount : 0) - 
+		user6.verifyBalance := user6.balance + (tx3.blockId != 0 ? tx3.amount : 0) - 
 									   (tx7.blockId != 0 ? tx7.amount : 0);
 
 
@@ -188,7 +189,7 @@ MODULE main
 -- COMANDOS PARA RODAR O SMV: 
 
 -- 1) no command: cd "C:\Program Files (x86)\nuXmv-1.1.1-win64\bin"
--- 2)  
+-- 2) nuXmv.exe -int "C:\Users\Bruno\Dropbox\Mestrado\Lógica e especificação\model-checking-blockchain\blockchain5.smv"
 -- 3) reset; go_msat; msat_pick_state; msat_simulate -v;
 
 
@@ -206,8 +207,14 @@ MODULE main
 -- CRIAR BLOCOS SEQUENCIALMENTE;
 	-- criar VARs para emUso foiUsado no createBlock;
 
--- ELIMINAR CONCORRÊNCIA ENTRE TXN
+-- ELIMINAR CONCORRÊNCIA ENTRE	 TXN
 
 -- Descrever as condições de SAT e UNSAT 
 
 -- Criar um makefile com o script que gera o código nuxmv.
+
+
+-- Fazer testes do gerador de código com diversos conjuntos de parâmatros para avaliar o desempenho do modelo.
+-- Verificar se os saldos impossíveis geram transações inválidas. Provavelmente verificando o saldo em um estado de
+-- transação inválida.
+-- Compilador deve gerar transações aleatórias para validar o modelo.

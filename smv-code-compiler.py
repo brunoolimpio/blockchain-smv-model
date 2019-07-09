@@ -1,35 +1,36 @@
 #!/usr/bin/env python
 # coding: utf-8
-
+ 
 import random
 from random import seed
 from random import choice
-import time
+import datetime
+
 print("--- Automatic blockchain SMV code generator. ---")
-
+ 
 autoGen = input("Do you want to automatically generate a blockchain based on randomic parameters? (yes/no)")
-
-
-
+ 
+ 
+ 
 if autoGen == "no":
     numNodes = int(input("How many nodes do you want in your P2P network?"))
 else:
     seed(input("Type an integer number to be used as the seed of ramdomness: "))
-    numNodes = 5 #random.randint(2,20)
-
-
+    numNodes = 10 #random.randint(2,20)
+ 
+ 
 nodes = []
 for i in range(1,numNodes+1):
         nodes.append("node{} : createNode({});".format(i, i))      
-
-
+ 
+ 
 #for i in range(0,len(nodes)):
    # print(nodes[i])
-
-
+ 
+ 
 print("The {} requested nodes was sucessfully created.".format(len(nodes)))
 print("You must create at least 2 users. The users are pairs like (id, balance).")
-
+ 
 users = []
 if autoGen == "no":
     numUsers = int(input("How many users do you want to create?"))
@@ -40,28 +41,28 @@ if autoGen == "no":
     else:
         print("You must create at least 2 users")
 else:
-    numUsers = 6 #random.randint(2,25)
+    numUsers = 30 #random.randint(2,25)
     for i in range(1,numUsers+1):
         balance = random.randint(0,100)
         users.append("user{} : createUser(self,{});".format(i, balance))
-
+ 
 userList = []
 for i in range(1, numUsers+1):
     userList.append("user{}".format(i))
 #print(userList)
 #for i in range(0,len(users)):
 #    print(users[i])
-
-
+ 
+ 
 print("Now you can create transactions. A transaction is a tuple like (from, to, balance)")
-
-
+ 
+ 
 transactions = []
 userTxns = dict()
-
+ 
 for i in range(1,len(users)+1):
     userTxns["user{}".format(i)] = []
-    
+     
 if autoGen == "no":
     anotherTxn = "yes"
     countTxn = 1
@@ -86,21 +87,21 @@ else:
         else:
             userTxns[ufrom].append("tx{}".format(i))
             userTxns[uto].append("tx{}".format(i))
-
+ 
 print("{} transactions created.".format(countTxn))
 #print(userTxns)
-
-
+ 
+ 
 txnList = []
 for i in range(1,countTxn+1):
     txnList.append("tx{}".format(i))
 #for i in range(0, len(transactions)):
 #    print(transactions[i])
-
-
+ 
+ 
 print("Now it's time to create blocks")
-
-
+ 
+ 
 blocks = []
 if autoGen == "no":
     anotherBlock = "yes"
@@ -119,14 +120,12 @@ else:
         txnList.remove(txa)
         txb = random.choice(txnList)
         blocks.append("block{} : createBlock({},{},{});".format(i, i,txa,txb))
-
+ 
 print("{} blocks created.".format(countBlock))
-
+ 
 #for s in range(0,len(blocks)):
 #    print(blocks[s])
-
-start = time.time()
-
+ 
 print("")
 print("The blockchain generated has the below parameters:")
 print("--> {} nodes;".format(len(nodes)))
@@ -137,8 +136,10 @@ print("")
 print("--- Copy all the below code and paste it at the end of the file blockchain.smv ---")
 print("")
 print("")
-
-f = open("main.smv", "w+")
+base = open("blockchain-model.smv", "r")
+model = base.readlines()
+f = open("blockchain.smv", "w+")
+f.writelines(model)
 f.write("MODULE main" + "\nVAR" + "\n")
 ("\n")
 for i in range(0,len(nodes)):
@@ -158,7 +159,7 @@ for i in range(1,int((len(users)))):
     f.write("\n init(user{}.busy) := TRUE;".format(i))
 f.write("\n")
 f.write("\nDEFINE")
-
+ 
 for i in range(1,len(users)+1):
     userTxn = userTxns["user{}".format(i)]
     string_update = "\n   user{}.update := ".format(i)
@@ -171,7 +172,7 @@ for i in range(1,len(users)+1):
     else:
         string_update = string_update + "FALSE;"
     f.write(string_update)
-    
+     
 f.write("\n")
 f.write("\nblock1.previousBlock := block1.validBlock ? 0 : -1;")
 for i in range(2,len(blocks)+1):
@@ -185,5 +186,4 @@ for i in range(2,len(blocks)+1):
     f.write("\n                               TRUE : -1;")
     f.write("\n                            esac;")
 
-end = time.time()
-print(end - start)
+f.close()
